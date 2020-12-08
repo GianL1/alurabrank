@@ -1,4 +1,4 @@
-declare var $: any;
+import {logarTempoDeExecucao} from '../helpers/decorators/index';
 
 export abstract class View<T>{
 
@@ -8,6 +8,7 @@ export abstract class View<T>{
         this._elemento = $(seletor);
     }
 
+    @logarTempoDeExecucao()
     update(model: T): void{
         this._elemento.html(this.template(model));
     }
