@@ -1,11 +1,16 @@
-import {Negociacoes, Negociacao} from '../models/index';
+import {Negociacoes, Negociacao, NegociacaoParcial} from '../models/index';
 import {MensagemView, NegociacoesView} from '../views/index';
-import {logarTempoDeExecucao} from '../helpers/decorators/index';
+import {logarTempoDeExecucao, domInject} from '../helpers/decorators/index';
 
 export class NegociacaoController {
 
+    @domInject('#data')
     private _inputData: JQuery;
+
+    @domInject('#quantidade')
     private _inputQuantidade: JQuery;
+
+    @domInject('#valor')
     private _inputValor: JQuery;
     private _negociacoes = new Negociacoes();
     private _negociacoesView = new NegociacoesView('#negociacoesView');
@@ -29,7 +34,7 @@ export class NegociacaoController {
 
             this._mensagemView.update('Somente negociações em dias úteis por favor');
 
-            return
+            return;
         }
 
         const negociacao = new Negociacao(
@@ -47,6 +52,34 @@ export class NegociacaoController {
     private ehDiaUtil(data: Date) {
         
         return data.getDay() != DiaDaSemana.Sabado && data.getDay() != DiaDaSemana.Domingo
+    }
+
+    importaDados() {
+
+        function isOk(res: Response) {
+
+            if (res.ok) {
+                return res
+            } else {
+                throw new Error(res.statusText);
+            
+            }
+        }
+
+        fetch('http://localhost:8080/dados')
+        .then(res => isOk(res))
+        .then(res => res.json())
+        .then(
+            (dados:NegociacaoParcial[]) => {
+                dados.map(
+                            dado => new Negociacao(new Date(), dado.vezes, dado.montante)
+                        )
+                        .forEach(negociacao => this._negociacoes.adiciona(negociacao))
+                        this._negociacoesView.update(this._negociacoes)
+                }
+            )
+        
+        .catch(err => console.log(err.message));
     }
 }
 
